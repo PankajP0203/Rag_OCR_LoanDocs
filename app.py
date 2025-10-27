@@ -61,7 +61,7 @@ chatbot = gr.ChatInterface(
 )
 
 with gr.Blocks() as demo:
-    with gr.Sidebar():
+    with gr.Row():
         gr.LoginButton()
     chatbot.render()
 
