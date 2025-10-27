@@ -34,10 +34,16 @@ class RAGPipeline:
         self.retriever = Retriever(store_dir)
 
     def ingest_text(self, raw_text: str, doc_id: str, redact: bool = True):
-        text = clean_text(raw_text)
-        if redact: text = redact_pii(text)
+        text = clean_text(raw_text or "")
+        if redact:
+            text = redact_pii(text)
+        if not text.strip():
+            # nothing to ingest
+            return 0, 0
         paras = simple_paragraph_split(text)
         chunks = chunk_paragraphs(paras, max_tokens=350, overlap_tokens=40)
+        if not chunks:
+            return 0, 0
         self.retriever.add_documents(chunks, doc_id=doc_id)
         tokens = sum(token_estimate(c) for c in chunks)
         return len(chunks), tokens

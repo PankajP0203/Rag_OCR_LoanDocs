@@ -65,8 +65,8 @@ with gr.Blocks(title="RAG OCR Demo (IIFL)") as demo:
             msg, text = ingest_file(file, lang, redact)
             if not text or not text.strip():
                 msg = (msg or "Ingestion finished.") + " | ⚠️ No text extracted."
-                msg += " Possible causes: (1) protected PDF, (2) broken file, (3) Poppler/Tesseract not available."
-                msg += " Try a .txt or a simple image/PDF."
+                msg += " Likely causes: (1) image/scanned PDF but Tesseract not installed, (2) protected/broken PDF."
+                msg += " Try a digital PDF/TXT or ensure apt.txt installs tesseract/poppler."
             short = (text or "")[:1000]
             return msg, short
 
