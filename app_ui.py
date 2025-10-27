@@ -60,11 +60,16 @@ with gr.Blocks(title="RAG OCR Demo (IIFL)") as demo:
         ingest_btn = gr.Button("Ingest")
         ingest_status = gr.Textbox(label="Status", lines=2)
         preview_text = gr.Textbox(label="Extracted text (first 1000 chars)", lines=10)
+        # app_ui.py (only this small change inside _preview_wrap)
+def _preview_wrap(file, lang, redact):
+    msg, text = ingest_file(file, lang, redact)
+    if not text or not text.strip():
+        msg = (msg or "Ingestion finished.") + " | ⚠️ No text extracted."
+        msg += " Possible causes: (1) protected PDF, (2) broken file, (3) Poppler/Tesseract not available."
+        msg += " Try a .txt or a simple image/PDF."
+    short = (text or "")[:1000]
+    return msg, short
 
-        def _preview_wrap(file, lang, redact):
-            msg, text = ingest_file(file, lang, redact)
-            short = (text or "")[:1000]
-            return msg, short
 
         ingest_btn.click(_preview_wrap, inputs=[file, lang, redact], outputs=[ingest_status, preview_text])
 
