@@ -1,0 +1,11 @@
+IIFL Home Finance – Sanction Letter (DEMO)
+Sanction Date: 21-Aug-2025
+Applicant: Rajat Mehra
+Product: Home Loan
+Sanctioned Amount: ₹ 27,50,000
+ROI (Floating): 9.35% p.a.
+Tenure: 240 months
+EMI: ₹ 25,633
+Processing Fee: ₹ 11,000 + GST
+Branch: Jaipur
+Note: This is a demo document. Numbers are synthetic.

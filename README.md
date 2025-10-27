@@ -1,16 +1,3 @@
----
-title: Rag Ocr Iifl
-emoji: 💬
-colorFrom: yellow
-colorTo: purple
-sdk: gradio
-sdk_version: 5.42.0
-app_file: app.py
-pinned: false
-hf_oauth: true
-hf_oauth_scopes:
-- inference-api
-license: apache-2.0
----
-
-An example chatbot using [Gradio](https://gradio.app), [`huggingface_hub`](https://huggingface.co/docs/huggingface_hub/v0.22.2/en/index), and the [Hugging Face Inference API](https://huggingface.co/docs/api-inference/index).
+RAG OCR (Interview Demo)
+- Works with TXT/Images/PDFs. For the first run we’ll use TXT for zero dependencies.
+- Endpoints: POST /ingest, POST /query
