@@ -4,7 +4,7 @@ emoji: 🧾
 colorFrom: indigo
 colorTo: pink
 sdk: gradio
-sdk_version: 4.44.0
+sdk_version: 4.44.1
 app_file: app_ui.py
 pinned: false
 license: mit
