@@ -28,7 +28,9 @@ def ingest_file(file, lang="eng", redact=True):
     chunks, tokens = pipeline.ingest_text(text, doc_id=doc_id, redact=redact)
     return f"Ingested: {doc_id} | chunks={chunks} | tokens~{tokens}", text
 
-def ask_query(query, k=5, use_llm=False):
+def ask_query(query, k=5, use_llm=False, model_name="gpt-4o-mini"):
+    if model_name:
+        os.environ["LLM_MODEL"] = str(model_name)
     if not query or not query.strip():
         return "Type a question.", "", "", {}
     answer, contexts, scores = pipeline.answer(query, k=int(k), use_llm=use_llm)
@@ -41,7 +43,6 @@ def ask_query(query, k=5, use_llm=False):
         except Exception:
             fields = {}
 
-    # make scores human-readable
     try:
         scores_fmt = [round(float(s), 4) for s in scores]
     except Exception:
@@ -60,7 +61,7 @@ with gr.Blocks(title="RAG OCR Demo (IIFL)") as demo:
         ingest_btn = gr.Button("Ingest")
         ingest_status = gr.Textbox(label="Status", lines=2)
         preview_text = gr.Textbox(label="Extracted text (first 1000 chars)", lines=10)
-        # app_ui.py (only this small change inside _preview_wrap)
+
         def _preview_wrap(file, lang, redact):
             msg, text = ingest_file(file, lang, redact)
             if not text or not text.strip():
@@ -76,7 +77,12 @@ with gr.Blocks(title="RAG OCR Demo (IIFL)") as demo:
         with gr.Row():
             query = gr.Textbox(label="Your question", value="What is the sanctioned amount and EMI?")
             k = gr.Slider(1, 10, value=5, step=1, label="Top-K")
-            use_llm = gr.Checkbox(value=False, label="Use LLM synthesis (set OPENAI_API_KEY in Space Secrets)")
+            use_llm = gr.Checkbox(value=True, label="Use LLM synthesis")
+            model_dd = gr.Dropdown(
+                choices=["gpt-4o-mini", "gpt-4o", "gpt-4.1-mini"],
+                value=os.getenv("LLM_MODEL", "gpt-4o-mini"),
+                label="LLM model (requires OPENAI_API_KEY)",
+            )
         ask_btn = gr.Button("Ask")
 
         answer = gr.Textbox(label="Answer", lines=6)
@@ -84,7 +90,12 @@ with gr.Blocks(title="RAG OCR Demo (IIFL)") as demo:
         scores = gr.Textbox(label="Scores", lines=2)
         fields = gr.JSON(label="Extracted Fields (SanctionedAmount, EMI, ROI, Tenure, etc.)")
 
-        ask_btn.click(ask_query, inputs=[query, k, use_llm], outputs=[answer, contexts, scores, fields])
+        # NOTE: pass model_dd into inputs so ask_query receives model_name
+        ask_btn.click(
+            ask_query,
+            inputs=[query, k, use_llm, model_dd],
+            outputs=[answer, contexts, scores, fields],
+        )
 
 if __name__ == "__main__":
     demo.launch()
