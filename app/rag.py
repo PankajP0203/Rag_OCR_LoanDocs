@@ -9,26 +9,32 @@ def redact_pii(text: str) -> str:
     text = re.sub(r'\b\d{9,18}\b', 'ACNO_[REDACTED]', text)
     return text
 
-# app/rag.py — replace synthesize_answer with this:
+# app/rag.py
 def synthesize_answer(query: str, contexts: list[str]) -> str:
     import os
     combined = "\n\n".join([c for c in contexts if c])[:12000]  # trim long context
     api_key = os.getenv("OPENAI_API_KEY", "").strip()
-    model = os.getenv("LLM_MODEL", "gpt-4o-mini").strip()  # set in Space secrets
+    model = os.getenv("LLM_MODEL", "gpt-4o-mini").strip()
 
     if not api_key:
-        # fall back to extractive mode text
-        return (
-            "[LLM not configured]\n\n"
-            + (combined[:1500] if combined else "No context available.")
-        )
+        return "[LLM not configured]\n\n" + (combined[:1500] if combined else "No context available.")
+
     try:
         from openai import OpenAI
-        client = OpenAI(api_key=api_key)
+        import httpx  # used only if proxy is set
+
+        # If you *really* need a proxy, set HTTPS_PROXY / HTTP_PROXY in Space secrets.
+        proxy = os.getenv("HTTPS_PROXY") or os.getenv("HTTP_PROXY") or ""
+        if proxy:
+            http_client = httpx.Client(proxies=proxy, timeout=30.0)
+            client = OpenAI(api_key=api_key, http_client=http_client)
+        else:
+            client = OpenAI(api_key=api_key)
+
         system = (
             "You are a precise loan document assistant. "
-            "Answer ONLY using the CONTEXT. If missing, say you don't have enough information. "
-            "Return crisp, numeric values when asked for sanctioned amount, EMI, ROI, or tenure."
+            "Answer ONLY using the CONTEXT. If information is missing, say so. "
+            "Prefer concise numeric answers for sanctioned amount, EMI, ROI, tenure."
         )
         prompt = f"CONTEXT:\n{combined}\n\nQUESTION: {query}\n\nAnswer:"
         resp = client.chat.completions.create(
@@ -43,7 +49,6 @@ def synthesize_answer(query: str, contexts: list[str]) -> str:
         return resp.choices[0].message.content.strip()
     except Exception as e:
         return f"[LLM error] {e}\n\n{combined[:1500]}"
-
 class RAGPipeline:
     def __init__(self, store_dir: str):
         self.retriever = Retriever(store_dir)
