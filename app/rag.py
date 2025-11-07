@@ -9,25 +9,40 @@ def redact_pii(text: str) -> str:
     text = re.sub(r'\b\d{9,18}\b', 'ACNO_[REDACTED]', text)
     return text
 
-def synthesize_answer(query: str, contexts):
-    api_key = os.getenv("OPENAI_API_KEY")
-    combined = "\n\n".join(contexts)
+# app/rag.py — replace synthesize_answer with this:
+def synthesize_answer(query: str, contexts: list[str]) -> str:
+    import os
+    combined = "\n\n".join([c for c in contexts if c])[:12000]  # trim long context
+    api_key = os.getenv("OPENAI_API_KEY", "").strip()
+    model = os.getenv("LLM_MODEL", "gpt-4o-mini").strip()  # set in Space secrets
+
     if not api_key:
-        return f"[LLM not configured]\n\n{combined[:1200]}"
+        # fall back to extractive mode text
+        return (
+            "[LLM not configured]\n\n"
+            + (combined[:1500] if combined else "No context available.")
+        )
     try:
         from openai import OpenAI
         client = OpenAI(api_key=api_key)
-        system = "Answer only from CONTEXT. If insufficient, say so."
-        prompt = f"CONTEXT:\\n{combined}\\n\\nQUESTION: {query}\\n\\nAnswer:"
+        system = (
+            "You are a precise loan document assistant. "
+            "Answer ONLY using the CONTEXT. If missing, say you don't have enough information. "
+            "Return crisp, numeric values when asked for sanctioned amount, EMI, ROI, or tenure."
+        )
+        prompt = f"CONTEXT:\n{combined}\n\nQUESTION: {query}\n\nAnswer:"
         resp = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[{"role":"system","content":system},
-                      {"role":"user","content":prompt}],
-            temperature=0.1, max_tokens=400
+            model=model,
+            messages=[
+                {"role": "system", "content": system},
+                {"role": "user", "content": prompt},
+            ],
+            temperature=0.1,
+            max_tokens=400,
         )
         return resp.choices[0].message.content.strip()
     except Exception as e:
-        return f"[LLM error] {e}\n\n{combined[:1200]}"
+        return f"[LLM error] {e}\n\n{combined[:1500]}"
 
 class RAGPipeline:
     def __init__(self, store_dir: str):
