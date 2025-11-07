@@ -12,3 +12,4 @@ scikit-learn==1.5.2
 python-dotenv==1.0.1
 pypdf==5.0.1
 gradio==4.44.1
+openai==1.51.0
