@@ -1,3 +1,16 @@
-store/*
+# Python
 __pycache__/
 *.pyc
+.venv/
+.env
+
+# Local data / stores
+store/
+data/
+
+# OS
+.DS_Store
+
+# HF / Gradio temp
+/tmp/
+*.swp
